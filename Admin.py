@@ -1,24 +1,27 @@
 
 from time import sleep
-from traceback import FrameSummary
-from CabFare import CabFare
-from Location import Location
-from billing import Bill
-from rideDetails import RideDetails
-from User import User
-from Driver import Driver
-from cabDetails import CabDetails
-from Customer import Customer
 from uuid import uuid4
 
+from User import User
+from CabCategory import *
+from billing import Bill
+from Driver import Driver
+from CabFare import CabFare
+from Customer import Customer
+from Location import Location
+from cabDetails import CabDetails
+from rideDetails import RideDetails
+
+#Singleton class
 
 class Admin(User):
+    admin = None
     allDrivers = []
     allCustomers = []
-    sedanCabs = []
-    primeCabs = []
-    economyCabs = []
-    cabCategopry = ["Economy","Sedan","Prime"]
+    cabCategopry = ["economy","sedan","prime"]
+    cabCategoryCount = 3
+    cabCategoryDictionary =  {"1":"economy","2":"sedan","3":"prime"}
+    cabCategoryClassDictionary = {"economy":Economy,"sedan":Sedan,"prime":Prime}
 
     def __init__(self, userName, password, emailAddress, phoneNumber, userAddress):
         super().__init__(userName, password, emailAddress, phoneNumber, userAddress)
@@ -26,6 +29,15 @@ class Admin(User):
         self.customerCabCategory = None
         self.customerRideDetails = None
         self.customerBill = None
+
+    @staticmethod
+    def createAdmin(userName, password, emailAddress, phoneNumber, userAddress):
+        if Admin.admin==None:
+            admin = Admin(userName,password,emailAddress,phoneNumber,userAddress)
+            return admin
+
+        return Admin.admin
+
 
 
     def startSystem(self):
@@ -85,7 +97,8 @@ class Admin(User):
             print(str(index)+" .Book A "+cab)
             index+=1
         
-    
+    def addNewCabCategory(newCategoryName,baseFare):
+        pass
 
     def findRideForCustomer(self,dropLocation):
         if self.currentCustomer==None:
@@ -93,41 +106,13 @@ class Admin(User):
             return 
         self.displayCarCategory()
         customerCabChoice = input("Enter Choice ")
-        if customerCabChoice == "1":
-            #for Economy Cab
-            self.customerCabCategory = "Economy"
-            flag,driver = self.searchForNearestCab("Economy",Admin.economyCabs)
-            if not flag:
-                return False
-            self.pickUpCustomer(dropLocation,driver)
-            
-        elif (customerCabChoice=="2"):
-            #for Sedan Cab
-            self.customerCabCategory = "Sedan"
-            flag,driver = self.searchForNearestCab("Sedan",Admin.sedanCabs)
-            if not flag:
-                return False
-            self.pickUpCustomer(dropLocation,driver)
-            # if flag :
-            #     self.pickUpCustomer(dropLocation,driver)
-            # else :
-            #     return False
-        elif(customerCabChoice=="3"): 
-            #for Prime Cab
-            self.customerCabCategory = "Prime"
-            flag,driver = self.searchForNearestCab("Prime",Admin.primeCabs)
-            if not flag:
-                return False
-            self.pickUpCustomer(dropLocation,driver)
-            # if flag :
-            #     self.pickUpCustomer(dropLocation,driver)
-            # else :
-            #     return False
-        else:
-            print("Invalid choice!!")
-            self.findRideForCustomer(dropLocation)
-        return 
-
+      
+        self.customerCabCategory = Admin.cabCategoryDictionary[customerCabChoice]
+        flag,driver = self.searchForNearestCab(self.customerCabCategory,Admin.cabCategoryClassDictionary[self.customerCabCategory])
+        if not flag:
+            return False
+        self.pickUpCustomer(dropLocation,driver)
+        return True
     
 
     def findDriver(self,driverID):
@@ -136,7 +121,8 @@ class Admin(User):
                 return driver
         return False
 
-    def searchForNearestCab(self,cabCategory,cabList):
+    def searchForNearestCab(self,cabCategory,cabCategoryClass):
+        cabList = cabCategoryClass.returnCabList()
         allotedCab = cabList[0]
         cabDistance = abs((cabList[0].currentLocation.locationID)-(self.currentCustomer.currentLocation.locationID))
         for cab in cabList:
@@ -180,7 +166,8 @@ class Admin(User):
         
     def calculateCustomerFare(self):
         distanceTravelled = abs((self.customerRideDetails.pickupLocation.locationID)-(self.customerRideDetails.dropLocation.locationID))
-        customerTotalFare = CabFare.calculateCabFare(self.customerCabCategory,distanceTravelled)
+        newCabFare = CabFare(Admin.cabCategoryClassDictionary[(self.customerCabCategory.lower())]())
+        customerTotalFare = newCabFare.calculateCabFare(distanceTravelled)
         return customerTotalFare
 
     def _findCustomer(self, userName):
@@ -235,12 +222,9 @@ class Admin(User):
         newCab = CabDetails.createCab(driverID, cabNumber, cabType, cabCategory)
         newCab.currentLocation = driverCurrentlocation
 
-        if cabCategory.lower() == 'economy':
-            Admin.economyCabs.append(newCab)
-        elif cabCategory.lower() == 'sedan':
-            Admin.sedanCabs.append(newCab)
-        elif cabCategory.lower() == 'prime':
-            Admin.primeCabs.append(newCab)
+        
+        cablist = Admin.cabCategoryClassDictionary[cabCategory.lower()].returnCabList()
+        cablist.append(newCab)
 
         newDriver = Driver.createDriver(driverID, userName, password, emailID, phoneNumber, address, newCab)
         newDriver.isLoggedIn = True
@@ -286,12 +270,9 @@ class Admin(User):
         if flag:
             driver.isLoggedIn = False
             cab = driver.cabDetails
-            if cab.cabCategory.lower() == 'economy':
-                Admin.economyCabs.remove(cab)
-            elif cab.cabCategory.lower() == 'sedan':
-                Admin.sedanCabs.remove(cab)
-            elif cab.cabCategory.lower() == 'prime':
-                Admin.primeCabs.remove(cab)
+
+            cablist = Admin.cabCategoryClassDictionary[cab.cabCategory.lower()].returnCabList()
+            cablist.remove(cab)
             Admin.allCustomers.remove(driver)
             print("Account deleted successfully!")
             return True
@@ -301,7 +282,7 @@ class Admin(User):
 
 
 if __name__=="__main__":
-    newAdmin = Admin("admin1","123","admin@gmail.com","8317219776","kasarvadavli")
+    newAdmin = Admin.createAdmin("admin1","123","admin@gmail.com","8317219776","kasarvadavli")
 
     newAdmin.addDrivers()
     
