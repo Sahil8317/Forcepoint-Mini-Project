@@ -1,18 +1,21 @@
 from User import User
-from uuid import uuid4
 
 class Driver(User):
-    def __init__(self, userName, password, emailAddress, phoneNumber, userAddress,cabDetails):
+    def __init__(self, driverID, userName, password, emailAddress, phoneNumber, userAddress,cabDetails):
         super().__init__(userName, password, emailAddress, phoneNumber, userAddress)
-        deriverID = uuid4()
+        self.driverID = driverID
         self.cabDetails = cabDetails
         self.rating = 0
-        self.currentLocation = None
 
-    def setDriverCurrentLocation(self):
-        pass
+    @staticmethod
+    def createDriver(driverID, userName,password,emailAddress,phoneNumber,address, cabDetails):
+        newDriver = Driver(driverID, userName,password,emailAddress,phoneNumber,address, cabDetails)
+        return newDriver
 
-    def getDriverDetails(self):
-        pass
+    def displayDriverDetails(self):
+        print("Driver Name "+self.userName)
+        print("Driver Phone Number is "+self.phoneNumber)
+
+
 
 

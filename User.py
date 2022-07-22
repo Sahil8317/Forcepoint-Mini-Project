@@ -1,7 +1,6 @@
 
 from uuid import uuid4
 
-
 class User:
     def __init__(self,userName,password,emailAddress,phoneNumber,userAddress):
         self.userName = userName
@@ -12,11 +11,15 @@ class User:
         self.isLoggedIn = False
         self.userID = uuid4()
 
-    def displayUserDetails():
-        pass
+    def displayUserDetails(self):
+        print("User Name is "+self.userName)
+        print("Email Address is "+self.emailAddress)
+        print("Phone Number is "+self.emailAddress)
+        print("User Address is "+self.userAddress)
+        print("is logged in "+self.isLoggedIn)
 
-    def getLoggingInfo():
-        pass
+    def getLoggingInfo(self):
+        self.isLoggedIn
 
-    def changelogInStatus():
-        pass
+    def changelogInStatus(self,status):
+        self.isLoggedIn = status
